@@ -16,9 +16,12 @@ double arr13[]={130.34*PI/180,-72.03*PI/180,117.63*PI/180,-132.04*PI/180,-89.44*
 double arr21[]={142.16*PI/180,-44.4*PI/180,94.11*PI/180,-140.23*PI/180,-87.75*PI/180,0};
 double arr22[]={141.86*PI/180,-50.36*PI/180,94.48*PI/180,-136.08*PI/180,-87.01*PI/180,0};
 double arr23[]={141.93*PI/180,-54.91*PI/180,92.49*PI/180,-128.93*PI/180,-86.71*PI/180,0};
-double arr31[]={162.49*PI/180,-63.2*PI/180,143.76*PI/180,-173.32*PI/180,-90.1*PI/180,0.03*PI/180};
-double arr32[]={161.17*PI/180,-74.79*PI/180,144.95*PI/180,-164.91*PI/180,-89.19*PI/180,0.03*PI/180};
-double arr33[]={161*PI/180,-86.76*PI/180,140.72*PI/180,-145.74*PI/180,-89.03*PI/180,0.03*PI/180};
+double arr31[]={162.49*PI/180,-63.2*PI/180,143.76*PI/180,-173.32*PI/180,-90.1*PI/180,0};
+double arr32[]={161.17*PI/180,-74.79*PI/180,144.95*PI/180,-164.91*PI/180,-89.19*PI/180,0};
+double arr33[]={161*PI/180,-86.76*PI/180,140.72*PI/180,-145.74*PI/180,-89.03*PI/180,0};
+double arrH1[]={132.12*PI/180,-82.81*PI/180,104.56*PI/180,-109.19*PI/180,-93.92*PI/180,0};
+double arrH2[]={144.55*PI/180,-62.59*PI/180,76.05*PI/180,-100.05*PI/180,-93.2*PI/180,12.39*PI/180.0};
+double arrH3[]={165.1*PI/180,-105.22*PI/180,120.28*PI/180,-100.57*PI/180,-91.9*PI/180,32.91*PI/180.0};
 
 // array to define final velocity of point to point moves.  For now slow down to zero once 
 // each point is reached
@@ -41,21 +44,21 @@ std::vector<double> Q23 (arr23,arr23+sizeof(arr23) / sizeof(arr23[0]));
 std::vector<double> Q31 (arr31,arr31+sizeof(arr31) / sizeof(arr31[0]));
 std::vector<double> Q32 (arr32,arr32+sizeof(arr32) / sizeof(arr32[0]));
 std::vector<double> Q33 (arr33,arr33+sizeof(arr33) / sizeof(arr33[0]));
+std::vector<double> QH1 (arrH1,arrH1+sizeof(arrH1) / sizeof(arrH1[0]));
+std::vector<double> QH2 (arrH2,arrH2+sizeof(arrH2) / sizeof(arrH2[0]));
+std::vector<double> QH3 (arrH3,arrH3+sizeof(arrH3) / sizeof(arrH3[0]));
 
 std::vector<double> v (arrv,arrv+sizeof(arrv) / sizeof(arrv[0]));
 
 // creating an array of these vectors allows us to iterate through them
 // and programatically choose where to go.
-std::vector<double> Q [3][3] = {
-    {Q11, Q12, Q13},
-    {Q11, Q12, Q13},
-    {Q11, Q12, Q13}
+std::vector<double> Q [3][4] = {
+    {Q11, Q12, Q13, QH1},
+    {Q21, Q22, Q23, QH2},
+    {Q31, Q32, Q33, QH3}
 };
 
-std::vector<double> start[3]={Q11,Q12,Q13};
-std::vector<double> end[3]={Q11,Q12,Q13};
-std::vector<double> middle[3]={Q11,Q12,Q13};
-
+// std::vector<double> high[3]={QH1,QH2,QH3};
 
 // Global bool variables that are assigned in the callback associated when subscribed 
 // to the "ur3/position" topic
@@ -96,6 +99,9 @@ int main(int argc, char **argv)
     
 	int inputdone = 0;
 	int Loopcnt = 0;
+	int startPos = 0;
+	int endPos = 0;
+	int midPos = 0;
 //initialization & variable definition
 	ros::init(argc, argv, "lab2node");	//initialzation of ros required for each Node.
 	ros::NodeHandle nh;				//handler for this node.
@@ -112,22 +118,43 @@ int main(int argc, char **argv)
 
 	std::string inputString;
 	while (!inputdone) {
-		std::cout << "Enter Number of Loops <Either 1 2 or 3>";
+		std::cout << "Enter start point <Either 1 2 or 3>";
 		std::getline(std::cin, inputString);
 		std::cout << "You entered " << inputString << "\n";
 		if (inputString == "1") {
 			inputdone = 1;
-			Loopcnt = 1;
+			startPos=0;
 		} else if (inputString == "2") {
 			inputdone = 1;
-			Loopcnt = 2;
+			startPos=1;
 		} else if (inputString == "3") {
 			inputdone = 1;
-			Loopcnt = 3;
+			startPos=2;
 		} else {
-			std:cout << "Please just enter the character 1 2 or 3\n\n";
+			std::cout << "Please just enter the character 1 2 or 3\n\n";
 		}
 	}
+
+	inputdone=0;
+	while (!inputdone) {
+		std::cout << "Enter start point <Either 1 2 or 3>";
+		std::getline(std::cin, inputString);
+		std::cout << "You entered " << inputString << "\n";
+		if (inputString == "1") {
+			inputdone = 1;
+			endPos=0;
+		} else if (inputString == "2") {
+			inputdone = 1;
+			endPos=1;
+		} else if (inputString == "3") {
+			inputdone = 1;
+			endPos=2;
+		} else {
+			std::cout << "Please just enter the character 1 2 or 3\n\n";
+		}
+	}
+
+	midPos=6-startPos-endPos;
 
 	while(!ros::ok()){};	//check if ros is ready for operation
 		
@@ -135,7 +162,7 @@ int main(int argc, char **argv)
 
 	ros::Rate loop_rate(SPIN_RATE); // Initialize the rate to publish to ur3/command
 	int spincount = 0;
- 
+	Loopcnt = 1; 
 	while(Loopcnt > 0) {
 		driver_msg.destination=QH;  // Set desired position to move home 
 		pub_command.publish(driver_msg);  // publish command, but note that is possible that
@@ -159,8 +186,31 @@ int main(int argc, char **argv)
 			loop_rate.sleep();
 		}
 
+		ROS_INFO("sending Goals 0");
+		driver_msg.destination=Q[startPos][3];
+		pub_command.publish(driver_msg);  // publish command, but note that is possible that
+												  // the subscriber will not receive this message.
+		spincount = 0;
+		while (isReady) { // Waiting for isReady to be false meaning that the driver has the new command
+			ros::spinOnce();  // Allow other ROS functionallity to run
+			loop_rate.sleep(); // Sleep and wake up at 1/20 second (1/SPIN_RATE) interval
+			if (spincount > SPIN_RATE) {  // if isReady does not get set within 1 second re-publish
+				pub_command.publish(driver_msg);
+				ROS_INFO("Just Published again driver_msg");
+				spincount = 0;
+			}
+			spincount++;  // keep track of loop count
+		}
+
+		ROS_INFO("waiting for rdy");  // Now wait for robot arm to reach the commanded waypoint.
+		while(!isReady)
+		{
+			ros::spinOnce();
+			loop_rate.sleep();
+		}
+
 		ROS_INFO("sending Goals 1");
-		driver_msg.destination=Q[0][0];
+		driver_msg.destination=Q[startPos][2];
 		pub_command.publish(driver_msg);  // publish command, but note that is possible that
 												  // the subscriber will not receive this message.
 		spincount = 0;
@@ -192,7 +242,7 @@ int main(int argc, char **argv)
 		}
 
 		ROS_INFO("sending Goals 2");
-		driver_msg.destination=Q[0][1];
+		driver_msg.destination=Q[startPos][1];
 		driver_msg.duration=2.0;
 		pub_command.publish(driver_msg);  // publish command, but note that is possible that
 												  // the subscriber will not receive this message.
@@ -225,7 +275,7 @@ int main(int argc, char **argv)
 		}
 
 		ROS_INFO("sending Goals 3");
-		driver_msg.destination=Q[0][2];
+		driver_msg.destination=Q[startPos][0];
 		driver_msg.duration=1.0;
 		pub_command.publish(driver_msg);  // publish command, but note that is possible that
 												  // the subscriber will not receive this message.
